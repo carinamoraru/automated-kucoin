@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!--{{json_result}}-->
+<!--{{len}}-->
+<!--{{json_result[0]['close']}}-->
+<!--{{json_result['ret_msg']}}-->
+<table border="1">
+    <tr>
+        <th>No</th>
+        <th>Value</th>
+    </tr>
+    {% for json in json_result %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>
+            {{ json }}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
