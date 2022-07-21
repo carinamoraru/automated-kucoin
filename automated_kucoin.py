@@ -66,7 +66,7 @@ def index():
             transaction_order_id, today, today))
         conn.commit()
 
-    return render_template('home.html', json_result=myKucoin.get_ticker()[0], len=len(myKucoin.get_ticker()))
+    return "ok"
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
