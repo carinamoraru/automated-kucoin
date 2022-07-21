@@ -13,7 +13,7 @@ import requests
 import time
 import hmac
 
-live = 0
+live = 1
 api_key = config.API_KEY
 api_secret = config.API_SECURET
 api_passphrase = config.API_PASSWORD
