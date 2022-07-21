@@ -70,15 +70,15 @@ def index():
         order_id = data['strategy']['order_id']
         market_position = data['strategy']['market_position']
         market_position_size = data['strategy']['market_position_size']
-        transaction_order_id = ""
 
         myKucoin = my_kucoin.Mykucoin(live)
-        if passphrase == config.WEBHOOK_PASSPHRASE:
+        if passphrase == config.WEBHOOK_PASSPHRASE and exchange == "KUCOIN":
             # create new order on feature kucoin
-            # method = 'GET'
-            # endpoint = '/api/v2/account-overview?currency=USDT'
-            # accountOverview = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint))
-
+            method = 'POST'
+            endpoint = '/api/v2/order'
+            data = {"symbol": tradingpairs, "side": order_action, "type": "LIMIT", "price": order_price, "size": 1}
+            data_json = json.dumps(data)
+            orderPlacement = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint), data=data_json)
 
             sql = """insert into `bot_log` (id, bot_name, tradingpairs, bot_time, exchange, ticker, timeframe,
              position_size, order_action, order_contracts, order_price, order_id, market_position,
@@ -90,7 +90,7 @@ def index():
             conn.cursor().execute(sql, (
                 bot_name, tradingpairs, timenow, exchange, ticker, timeframe, position_size,
                 order_action, order_contracts, order_price, order_id, market_position, market_position_size,
-                transaction_order_id, today, today))
+                orderPlacement.json()['data']['orderId'], today, today))
             conn.commit()
 
     return render_template('home.html', json_result=myKucoin.get_ticker()[0], len=len(myKucoin.get_ticker()))
