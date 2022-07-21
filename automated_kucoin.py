@@ -35,38 +35,36 @@ cur = conn.cursor()
 @app.route('/', methods=['GET', 'POST'])
 # @app.route('/<int:uid>', methods=['GET','POST'])
 def index():
-    if request.method == 'POST':
-        data = json.loads(request.data)
-        bot_name = data['bot_name']
-        tradingpairs = data['tradingpairs']
-        passphrase = data['passphrase']
-        timenow = data['time']
-        exchange = data['exchange']
-        ticker = data['ticker']
-        timeframe = data['timeframe']
-        position_size = data['strategy']['position_size']
-        order_action = data['strategy']['order_action']
-        order_contracts = data['strategy']['order_contracts']
-        order_price = data['strategy']['order_price']
-        order_id = data['strategy']['order_id']
-        market_position = data['strategy']['market_position']
-        market_position_size = data['strategy']['market_position_size']
-        transaction_order_id = ""
+    bot_name = "botname"
+    tradingpairs = "tradingpairs"
+    passphrase = "password"
+    timenow = "timenow"
+    exchange = "exchange"
+    ticker = "ticker"
+    timeframe = "timeframe"
+    position_size = "position size"
+    order_action = "order action"
+    order_contracts = "order contracts"
+    order_price = "order price"
+    order_id = "order id"
+    market_position = "market postion"
+    market_position_size = "market position size"
+    transaction_order_id = "transaction order id"
 
-        myKucoin = my_kucoin.Mykucoin(live)
-        if passphrase == config.WEBHOOK_PASSPHRASE:
-            sql = """insert into `bot_log` (id, bot_name, tradingpairs, bot_time, exchange, ticker, timeframe,
-             position_size, order_action, order_contracts, order_price, order_id, market_position,
-            market_position_size, transaction_order_id, created_at, updated_at) values (NULL, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """
+    myKucoin = my_kucoin.Mykucoin(live)
+    if passphrase == config.WEBHOOK_PASSPHRASE:
+        sql = """insert into `bot_log` (id, bot_name, tradingpairs, bot_time, exchange, ticker, timeframe,
+                 position_size, order_action, order_contracts, order_price, order_id, market_position,
+                market_position_size, transaction_order_id, created_at, updated_at) values (NULL, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """
 
-    # running query command
-            conn.ping()  # reconnecting mysql
-            conn.cursor().execute(sql, (
-                bot_name, tradingpairs, timenow, exchange, ticker, timeframe, position_size,
-                order_action, order_contracts, order_price, order_id, market_position, market_position_size,
-                transaction_order_id, today, today))
-            conn.commit()
+        # running query command
+        conn.ping()  # reconnecting mysql
+        conn.cursor().execute(sql, (
+            bot_name, tradingpairs, timenow, exchange, ticker, timeframe, position_size,
+            order_action, order_contracts, order_price, order_id, market_position, market_position_size,
+            transaction_order_id, today, today))
+        conn.commit()
 
     return render_template('home.html', json_result=myKucoin.get_ticker()[0], len=len(myKucoin.get_ticker()))
 
