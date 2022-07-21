@@ -18,10 +18,10 @@ mysql_host = "us-cdbr-east-06.cleardb.net"
 mysql_dbname = "heroku_42b1a7a586099e3"
 mysql_username = "b9bf09310bc7a9"
 mysql_password = "a03f30ecf1dee90"
-mysql_host = "localhost"
-mysql_dbname = "trading"
-mysql_username = "root"
-mysql_password = ""
+# mysql_host = "localhost"
+# mysql_dbname = "trading"
+# mysql_username = "root"
+# mysql_password = ""
 today = datetime.datetime.now()
 
 # write and load log data for bot log table
