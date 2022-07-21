@@ -53,28 +53,20 @@ def index():
         market_position_size = data['strategy']['market_position_size']
         transaction_order_id = ""
 
+        myKucoin = my_kucoin.Mykucoin(live)
         if passphrase == config.WEBHOOK_PASSPHRASE:
             sql = """insert into `bot_log` (id, bot_name, tradingpairs, bot_time, exchange, ticker, timeframe,
              position_size, order_action, order_contracts, order_price, order_id, market_position, 
             market_position_size, transaction_order_id, created_at, updated_at) values (NULL, %s, 
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """
-            myKucoin = my_kucoin.Mykucoin(live)
 
     # running query command
             conn.ping()  # reconnecting mysql
-            # with conn.cursor() as cur:
-            #     cur.execute(sql, (
-            #     bot_name, timenow, exchange, ticker, bartime, open, high, low, close, volume, position_size,
-            #     order_action, order_contracts, order_price, order_id, market_position, market_position_size,
-            #     prev_market_position, prev_market_position_size, today, today))
             conn.cursor().execute(sql, (
                 bot_name, tradingpairs, timenow, exchange, ticker, timeframe, position_size,
                 order_action, order_contracts, order_price, order_id, market_position, market_position_size,
                 transaction_order_id, today, today))
-
             conn.commit()
-        else:
-            myKucoin = my_kucoin.Mykucoin(live)
 
         return render_template('home.html', json_result=myKucoin.get_ticker()[0], len=len(myKucoin.get_ticker()))
 
