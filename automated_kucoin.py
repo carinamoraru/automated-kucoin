@@ -90,7 +90,7 @@ def index():
             conn.cursor().execute(sql, (
                 bot_name, tradingpairs, timenow, exchange, ticker, timeframe, position_size,
                 order_action, order_contracts, order_price, order_id, market_position, market_position_size,
-                orderPlacement.json()['data']['orderId'], today, today))
+                orderPlacement.json(), today, today))
             conn.commit()
 
     return render_template('home.html', json_result=myKucoin.get_ticker()[0], len=len(myKucoin.get_ticker()))
