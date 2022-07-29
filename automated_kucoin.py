@@ -14,18 +14,24 @@ import time
 import hmac
 
 live = 1
-api_key = config.API_KEY
-api_secret = config.API_SECURET
-api_passphrase = config.API_PASSWORD
-base_uri = config.DEMO_URL
+if live == 1:
+    api_key = config.API_KEY
+    api_secret = config.API_SECURET
+    api_password = config.API_PASSWORD
+    base_uri = config.URL
+else:
+    api_key = config.DEMO_API_KEY
+    api_secret = config.DEMO_API_SECURET
+    api_password = config.DEMO_API_PASSWORD
+    base_uri = config.DEMO_URL
 mysql_host = "us-cdbr-east-06.cleardb.net"
 mysql_dbname = "heroku_42b1a7a586099e3"
 mysql_username = "b9bf09310bc7a9"
 mysql_password = "a03f30ecf1dee90"
-# mysql_host = "localhost"
-# mysql_dbname = "trading"
-# mysql_username = "root"
-# mysql_password = ""
+mysql_host = "localhost"
+mysql_dbname = "trading"
+mysql_username = "root"
+mysql_password = ""
 today = datetime.datetime.now()
 
 # write and load log data for bot log table
@@ -37,18 +43,20 @@ conn = pymysql.connect(host=mysql_host,
 cur = conn.cursor()
 
 
-def get_headers(method, endpoint):
+def get_headers(method, endpoint, data_json):
     now = int(time.time() * 1000)
-    str_to_sign = str(now) + method + endpoint
+    str_to_sign = str(now) + method + endpoint + str(data_json)
     signature = base64.b64encode(
-        hmac.new(api_secret.encode(), str_to_sign.encode(), hashlib.sha256).digest()).decode()
+        hmac.new(api_secret.encode('utf-8'), str_to_sign.encode('utf-8'), hashlib.sha256).digest())
     passphrase = base64.b64encode(
-        hmac.new(api_secret.encode(), api_passphrase.encode(), hashlib.sha256).digest()).decode()
-    return {'KC-API-KEY': api_key,
-            'KC-API-KEY-VERSION': '2',
-            'KC-API-PASSPHRASE': passphrase,
-            'KC-API-SIGN': signature,
-            'KC-API-TIMESTAMP': str(now)
+        hmac.new(api_secret.encode('utf-8'), api_password.encode('utf-8'), hashlib.sha256).digest())
+
+    return {"KC-API-SIGN": signature,
+            "KC-API-TIMESTAMP": str(now),
+            "KC-API-KEY": api_key,
+            "KC-API-PASSPHRASE": passphrase,
+            "KC-API-KEY-VERSION": "2",
+            "Content-Type": "application/json"  # specifying content type or using json=data in request
             }
 
 @app.route('/', methods=['GET', 'POST'])
@@ -74,9 +82,10 @@ def index():
         myKucoin = my_kucoin.Mykucoin(live)
         if passphrase == config.WEBHOOK_PASSPHRASE and exchange == "KUCOIN":
             # create new order on feature kucoin
+            # Create new order
             method = 'POST'
             endpoint = '/api/v2/order'
-            data = {"symbol": tradingpairs, "side": order_action, "type": "LIMIT", "price": order_price, "size": 1}
+            data = {"symbol": tradingpairs, "side": order_action, "type": "MARKET", "price": order_price, "size": 1}
             data_json = json.dumps(data)
             orderPlacement = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint), data=data_json)
 
@@ -97,15 +106,25 @@ def index():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+    # Create new order
+    method = 'POST'
+    endpoint = '/api/v2/order'
+    data = {"symbol": 'BTCUSDTM', "side": "BUY", "type": "MARKET", "price": "2500.0000000000", "size": 1,
+            "stopPrice": "20000.0000000000", "timeInForce": "GTC", "postOnly": False, "hidden": False,
+            "closeOrder": False, "visibleSize": 0, 'reduceOnly': False}
+    data_json = json.dumps(data)
+    orderPlacement = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, data_json),
+                                      data=data_json)
+
     # Getting Query Transaction Records
     method = 'GET'
     endpoint = '/api/v2/account-overview?currency=USDT'
-    accountOverview = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint))
+    accountOverview = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, ""))
 
     # Getting Accounts Balance(historical-trades)
     method = 'GET'
     endpoint = '/api/v2/orders/historical-trades?symbol=BTCUSDTM'
-    transactionHistoricalTrades = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint))
+    transactionHistoricalTrades = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, ""))
 
     # empty list
     historical_trades_id_list = []
@@ -168,7 +187,7 @@ def dashboard():
     # Getting Accounts Balance(history)
     method = 'GET'
     endpoint = '/api/v2/orders/history?symbol=BTCUSDTM'
-    transactionHistory = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint))
+    transactionHistory = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, ""))
 
     # empty list
     history_id_list = []
@@ -246,6 +265,26 @@ def dashboard():
                     conn.commit()
                 i = i + 1
 
+    ## Getting all active orders
+    method = 'GET'
+    endpoint = '/api/v2/orders/all-active'
+    allActiveOrders = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, ""))
+
+    ## Cancelling order
+    method = 'DELETE'
+    endpoint = '/api/v2/order'
+    data = {
+        "symbol": "BTCUSDTM",
+        "orderId": "62850634222739456"
+    }
+    data_json = json.dumps(data)
+    cancelOrders = requests.delete(base_uri + endpoint, data=data_json, headers=get_headers(method, endpoint, data_json))
+
+    ## Getting all active orders
+    method = 'GET'
+    endpoint = '/api/v2/orders/all-active'
+    allActiveOrders = requests.request(method, base_uri + endpoint, headers=get_headers(method, endpoint, ""))
+
     # calculate count of unique bots
     conn.ping()  # reconnecting mysql
     i = 0
@@ -265,8 +304,9 @@ def dashboard():
                 past_one_month = cur.rowcount
 
 
-    return render_template('dashboard.html', walletBalance=accountOverview.json()['data'][0]['walletBalance'], transactionHistory=transactionHistory.json()
-           ,pastOneHour = past_one_hour, pastOneDay = past_one_day, pastOneWeek = past_one_week, pastOneMonth = past_one_month)
+    return render_template('dashboard.html', walletBalance=accountOverview.json()['data'][0]['walletBalance'], transactionHistory=transactionHistory.json(),
+                           transactionHistoricalTrades=transactionHistoricalTrades.json(), allActiveOrders=allActiveOrders.json(),
+                           pastOneHour = past_one_hour, pastOneDay = past_one_day, pastOneWeek = past_one_week, pastOneMonth = past_one_month)
 
 
 if __name__ == "__main__":
